@@ -63,18 +63,19 @@ namespace ReactASPCore.RoomData
                 return null;
             }
         }
-        public async Task<Room> AddRoom(Room room)
+        public async Task<List<Room>> AddRooms(List<Room> addedRooms)
         {
             string response;
             using (ApplicationContext db = new ApplicationContext())
             {
                 var rooms = await db.Rooms.ToListAsync();
-                if (rooms.Find(x => x.Id == room.Id) == null)
+                var flag = addedRooms.TrueForAll(addedRoom => rooms.Find(x => x.Id == addedRoom.Id) == null);
+                await db.Rooms.AddRangeAsync(addedRooms);
+                if (flag)
                 {
-                    await db.Rooms.AddAsync(room);
                     await db.SaveChangesAsync();
-                    return room;
-                }
+                    return addedRooms;
+                }                
                 return null;
             }
         }

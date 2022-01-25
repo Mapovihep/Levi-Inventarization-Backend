@@ -7,7 +7,7 @@ namespace ReactASPCore.RoomData
     {
         Task<Room> GetRoom(Guid id);
         Task<List<Room>> GetRooms();
-        Task<Room> AddRoom(Room room);
+        Task<List<Room>> AddRooms(List<Room> rooms);
         Task<string> RemoveRoom(Guid roomId);
         Task<Room> EditRoom(Room room, Guid roomId);
     }

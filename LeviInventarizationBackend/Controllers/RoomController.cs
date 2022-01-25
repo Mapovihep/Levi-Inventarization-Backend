@@ -45,14 +45,15 @@ namespace Inventarization.Controllers
         
         [HttpPost]
         [Route("api/rooms")]
-        public async Task<IActionResult> AddRoom([FromBody] Room room, [FromHeader] string Authorization)
+        public async Task<IActionResult> AddRoom([FromBody] List<Room> rooms, [FromHeader] string Authorization)
         {
+            Console.WriteLine(rooms);
             string rights = await _employeeData.EmployeesRights(Authorization);
             try
             {
                 if (rights == "All rights")
                 {
-                    var response = await _roomData.AddRoom(room);
+                    var response = await _roomData.AddRooms(rooms);
                     return response != null ? Ok(response) : BadRequest("Room was not added - db is not connected");
                 }
                 else
