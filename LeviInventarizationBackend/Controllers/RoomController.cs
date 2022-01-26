@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ReactASPCore.EmployeesData;
 using ReactASPCore.Models;
@@ -7,6 +9,11 @@ using ReactASPCore.RoomData;
 namespace Inventarization.Controllers
 {
     [ApiController]
+    //[Route("[controller]")]
+    [Authorize(Policy = "Bearer")]
+
+    [EnableCors("CorsPolicy")]
+
     public class RoomController : ControllerBase
     {
         private RoomData _roomData = new RoomData();
@@ -29,6 +36,7 @@ namespace Inventarization.Controllers
 
         [HttpGet]
         [Route("api/rooms/{roomId}")]
+        [Authorize]
         public async Task<IActionResult> GetRoomInventory(Guid roomId, [FromHeader] string Authorization)
         {
             string rights = await _employeeData.EmployeesRights(Authorization);
@@ -42,12 +50,23 @@ namespace Inventarization.Controllers
             }
         }
 
-        
+        [HttpGet]
+        [Route("testGet")]
+        public async Task<IActionResult> GetTest()
+        {
+            return Ok("Hrllo");
+        }
+
+
+
+
         [HttpPost]
         [Route("api/rooms")]
-        public async Task<IActionResult> AddRoom([FromBody] List<Room> rooms, [FromHeader] string Authorization)
+        public async Task<IActionResult> AddRooms([FromBody] List<Room> rooms, [FromHeader] string Authorization)
         {
-            Console.WriteLine(rooms);
+            rooms.ForEach(x => 
+                Console.WriteLine(x.Name + ' ')
+            );
             string rights = await _employeeData.EmployeesRights(Authorization);
             try
             {

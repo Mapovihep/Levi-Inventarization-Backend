@@ -14,7 +14,7 @@ namespace ReactASPCore.Models
         }
         [Required]
         public string Name { get; set; } = null!;
-        public string CreatedAt { get; set; } = null;
+        public string CreatedAt { get; set; } = null!;
 
         public List<Inventory>? InventoryLots { get; set; } = new List<Inventory>();
         public List<InventorySetup>? InventorySetups { get; set; } = new List<InventorySetup>();

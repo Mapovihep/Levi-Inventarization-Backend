@@ -4,6 +4,8 @@ using ReactASPCore.Models;
 using ReactASPCore.EmployeesData;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using System.Text;
 /*using Newtonsoft.Json;*/
 
 namespace ReactASPCore.Controllers
@@ -37,10 +39,10 @@ namespace ReactASPCore.Controllers
                 HttpContext.Request.Headers["Authorization"] = "Bearer " + encodedJwt;
                 HttpContext.Request.Headers["Content-Type"] = "application/json;charset=utf-8";
                 await _authData.Login(employee, encodedJwt);
-                var headers = HttpContext.Request.Headers;
+                /*var headers = HttpContext.Request.Headers;
                 var context = HttpContext.Request.HttpContext;
                 var body = HttpContext.Request.Body;
-                var request = HttpContext.Request;
+                var request = HttpContext.Request;*/
                 string bearer = HttpContext.Request.Headers["Authorization"];
                 var token = new
                 {
@@ -53,9 +55,51 @@ namespace ReactASPCore.Controllers
 
         [HttpDelete]
         [Route("api/deleteEmployee/{id}")]
-        public async Task<IActionResult> DeleteEmployee(Guid id , [FromHeader] string Authorization)
+        public async Task<IActionResult> DeleteEmployee(Guid id, [FromHeader] string Authorization)
         {
             return Ok(await _authData.DeleteEmployee(id, Authorization));
+        }
+
+        [HttpPost("loginTest")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login()
+        {
+            var username = "Prerak";
+            if (username == "Prerak")
+            {
+                var token = await GenerateJwtToken(username);
+                return Ok(new { user = username, token = token });
+            }
+            else
+            {
+                return BadRequest("Invalid User");
+            }
+        }
+
+
+        private async Task<string> GenerateJwtToken(string username)
+        {
+            var someSecret = "a very random string which should";
+            List<Claim> claims = new List<Claim>() {
+        new Claim(ClaimTypes.Name,username),
+        new Claim(ClaimTypes.Role,"User"),
+
+    };
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(someSecret));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            JwtSecurityToken SecurityToken = new JwtSecurityToken(
+                issuer: "myapi.com",
+                audience: "myapi.com",
+                claims: claims,
+                expires: DateTime.Now.AddDays(7),
+                signingCredentials: credentials
+                );
+
+            return await Task.Run<string>(() =>
+            {
+                return jwtTokenHandler.WriteToken(SecurityToken);
+            });
         }
 
         private ClaimsIdentity SetClaims(string mail, string password)
@@ -74,5 +118,7 @@ namespace ReactASPCore.Controllers
             return null;
         }
     }
+
+
 }
 

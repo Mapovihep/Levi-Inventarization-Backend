@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,11 +9,31 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
-builder.Services.AddHttpClient("AccountClient", c =>
+builder.Services.AddAuthorization(auth =>
 {
-    c.DefaultRequestHeaders.Add("Authorization", "TEST");
+    auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser().Build());
 });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.ClaimsIssuer = "myapi.com";
+        options.Audience = "myapi.com";
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            //Required else token will fail to be validated and auth will fail
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("a very random string which should")),
+            ValidateLifetime = true,
+            ValidIssuer = "myapi.com",
+            ValidateIssuer = true,
+        };
+        options.RequireHttpsMetadata = false;
+    });
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,10 +47,11 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();*/
 
+app.UseRouting();
+app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");
-
 app.MapFallbackToFile("index.html");
 app.UseCors(x => x
                 .AllowAnyOrigin()

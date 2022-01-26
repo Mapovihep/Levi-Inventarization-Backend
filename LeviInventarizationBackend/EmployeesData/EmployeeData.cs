@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ReactASPCore.Models;
+using System.Security.Claims;
 
 namespace ReactASPCore.EmployeesData
 {
@@ -50,6 +51,8 @@ namespace ReactASPCore.EmployeesData
                             UpdatedBy = currentEmployee.UpdatedBy,
                             token = token
                         };
+
+                        
                         db.Remove(currentEmployee);
                         await db.AddAsync(withToken);
                         await db.SaveChangesAsync();

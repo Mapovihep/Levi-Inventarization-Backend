@@ -34,7 +34,7 @@ namespace LeviInventarizationBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Departments");
+                    b.ToTable("Departments", (string)null);
                 });
 
             modelBuilder.Entity("Inventarization.Models.InventorySetup", b =>
@@ -89,7 +89,7 @@ namespace LeviInventarizationBackend.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Setups");
+                    b.ToTable("Setups", (string)null);
                 });
 
             modelBuilder.Entity("ReactASPCore.Models.Employee", b =>
@@ -134,7 +134,7 @@ namespace LeviInventarizationBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Employees");
+                    b.ToTable("Employees", (string)null);
                 });
 
             modelBuilder.Entity("ReactASPCore.Models.Inventory", b =>
@@ -190,7 +190,7 @@ namespace LeviInventarizationBackend.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("InventoryLots");
+                    b.ToTable("InventoryLots", (string)null);
                 });
 
             modelBuilder.Entity("ReactASPCore.Models.Room", b =>
@@ -209,7 +209,7 @@ namespace LeviInventarizationBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("Inventarization.Models.InventorySetup", b =>
