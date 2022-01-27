@@ -1,13 +1,17 @@
+using LeviInventarizationBackend.ContainerConfiguration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+
+IConfiguration configuration = builder.Configuration;
+
+
 
 builder.Services.AddAuthorization(auth =>
 {
@@ -16,36 +20,32 @@ builder.Services.AddAuthorization(auth =>
         .RequireAuthenticatedUser().Build());
 });
 
+builder.Services.AddSingleton(new GetJwtSettings(configuration["Jwt:Key"],
+    configuration["Jwt:Issuer"],
+    configuration["Jwt:Audience"]));
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.ClaimsIssuer = "myapi.com";
-        options.Audience = "myapi.com";
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             //Required else token will fail to be validated and auth will fail
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("a very random string which should")),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
             ValidateLifetime = true,
-            ValidIssuer = "myapi.com",
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidAudience = configuration["Jwt:Audience"],
             ValidateIssuer = true,
         };
         options.RequireHttpsMetadata = false;
     });
+Console.WriteLine(configuration.GetValue<string>("Jwt:Audience"));
+Console.WriteLine(configuration.GetValue<string>("Jwt:Issuer"));
+Console.WriteLine(configuration.GetValue<string>("Jwt:Key"));
+
 
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-/*if (!app.Environment.IsDevelopment())
-{
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();*/
 
 app.UseRouting();
 app.UseAuthorization();

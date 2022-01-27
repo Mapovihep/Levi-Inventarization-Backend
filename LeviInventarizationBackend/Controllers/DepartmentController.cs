@@ -16,14 +16,13 @@ namespace Inventarization.Controllers
         [Route("api/departments")]
         public async Task<IActionResult> GetRooms([FromHeader] string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 return Ok(await _departmentData.GetAllDepartments());
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -31,14 +30,13 @@ namespace Inventarization.Controllers
         [Route("api/departments/{departmentId}")]
         public async Task<IActionResult> GetRoomInventory(Guid departmentId, [FromHeader] string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 return Ok(await _departmentData.GetDepartment(departmentId));
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -47,15 +45,14 @@ namespace Inventarization.Controllers
         [Route("api/departments")]
         public async Task<IActionResult> AddRoom([FromBody] Department department, [FromHeader] string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 var response = await _departmentData.AddDepartment(department);
                 return response != null ? Ok(response) : BadRequest("Department was not added - db is not connected");
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -63,14 +60,13 @@ namespace Inventarization.Controllers
         [Route("api/departments/{departmentId}")]
         public async Task<IActionResult> RemoveRoom(Guid departmentId, [FromHeader] string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 return Ok(await _departmentData.RemoveDepartment(departmentId));
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -78,15 +74,14 @@ namespace Inventarization.Controllers
         [Route("api/departments/{departmentId}")]
         public async Task<IActionResult> EditRoom([FromBody] Department department, [FromHeader] string Authorization, Guid roomId)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 var response = await _departmentData.EditDepartment(department, roomId);
                 return response != null ? Ok(response) : NotFound("This inventory lot was not found");
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
     }

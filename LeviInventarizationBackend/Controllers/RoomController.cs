@@ -11,26 +11,23 @@ namespace Inventarization.Controllers
     [ApiController]
     //[Route("[controller]")]
     [Authorize(Policy = "Bearer")]
-
     [EnableCors("CorsPolicy")]
 
     public class RoomController : ControllerBase
     {
         private RoomData _roomData = new RoomData();
-        private EmployeeData _employeeData = new EmployeeData();
 
         [HttpGet]
         [Route("api/rooms")]
         public async Task<IActionResult> GetRooms([FromHeader] string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try 
             {
                 return Ok(await _roomData.GetRooms());
             }
-            else
+            catch(Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -39,14 +36,13 @@ namespace Inventarization.Controllers
         [Authorize]
         public async Task<IActionResult> GetRoomInventory(Guid roomId, [FromHeader] string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 return Ok(await _roomData.GetRoom(roomId));
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -67,22 +63,14 @@ namespace Inventarization.Controllers
             rooms.ForEach(x => 
                 Console.WriteLine(x.Name + ' ')
             );
-            string rights = await _employeeData.EmployeesRights(Authorization);
             try
             {
-                if (rights == "All rights")
-                {
-                    var response = await _roomData.AddRooms(rooms);
-                    return response != null ? Ok(response) : BadRequest("Room was not added - db is not connected");
-                }
-                else
-                {
-                    return BadRequest(rights);
-                }
+                var response = await _roomData.AddRooms(rooms);
+                return response != null ? Ok(response) : BadRequest("Room was not added - db is not connected");
             }
             catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -90,14 +78,13 @@ namespace Inventarization.Controllers
         [Route("api/rooms/{roomId}")]
         public async Task<IActionResult> RemoveRoom(Guid roomId, [FromHeader]string Authorization)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try
             {
                 return Ok(await _roomData.RemoveRoom(roomId));
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
 
@@ -105,15 +92,14 @@ namespace Inventarization.Controllers
         [Route("api/rooms/{roomId}")]
         public async Task<IActionResult> EditRoom([FromBody] Room room, [FromHeader] string Authorization, Guid roomId)
         {
-            string rights = await _employeeData.EmployeesRights(Authorization);
-            if (rights == "All rights")
+            try 
             {
                 var response = await _roomData.EditRoom(room, roomId);
                 return response != null ? Ok(response) : NotFound("Room was not found");
             }
-            else
+            catch(Exception ex)
             {
-                return BadRequest(rights);
+                return BadRequest(ex);
             }
         }
     }

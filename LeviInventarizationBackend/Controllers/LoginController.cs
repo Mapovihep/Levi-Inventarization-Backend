@@ -5,7 +5,10 @@ using ReactASPCore.EmployeesData;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 using System.Text;
+using LeviInventarizationBackend.ContainerConfiguration;
+using System.Security.Cryptography;
 /*using Newtonsoft.Json;*/
 
 namespace ReactASPCore.Controllers
@@ -15,82 +18,75 @@ namespace ReactASPCore.Controllers
     {
         private EmployeeData _authData = new EmployeeData();
 
-        [HttpPost]
-        [Route("api/sign_up")]
-        public async Task<IActionResult> Registration([FromBody] Employee employee)
+        private GetJwtSettings settingsJwt;
+
+        public LoginController(GetJwtSettings settings)
         {
-            return Ok(await _authData.Registration(employee));
+            settingsJwt = settings;
         }
 
-        [HttpPost]
-        [Route("api/sign_in")]
-        public async Task<IActionResult> Login([FromBody] Employee employee)
-        {
-            if (await _authData.Login(employee, "") == "Login is successed")
-            {
-                var identity = SetClaims(employee.Email, employee.Password);
-                var jwt = new JwtSecurityToken(issuer: AuthOptions.ISSUER,
-                        audience: AuthOptions.AUDIENCE,
-                        notBefore: DateTime.UtcNow,
-                        claims: identity.Claims,
-                        expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
-                        signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-                var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-                HttpContext.Request.Headers["Authorization"] = "Bearer " + encodedJwt;
-                HttpContext.Request.Headers["Content-Type"] = "application/json;charset=utf-8";
-                await _authData.Login(employee, encodedJwt);
-                /*var headers = HttpContext.Request.Headers;
-                var context = HttpContext.Request.HttpContext;
-                var body = HttpContext.Request.Body;
-                var request = HttpContext.Request;*/
-                string bearer = HttpContext.Request.Headers["Authorization"];
-                var token = new
-                {
-                    bearer = bearer,
-                };
-                return Ok(token);
-            }
-            return BadRequest("User isn't found, try again");
-        }
-
-        [HttpDelete]
+        /*[HttpDelete]
         [Route("api/deleteEmployee/{id}")]
         public async Task<IActionResult> DeleteEmployee(Guid id, [FromHeader] string Authorization)
         {
             return Ok(await _authData.DeleteEmployee(id, Authorization));
-        }
+        }*/
 
-        [HttpPost("loginTest")]
+        [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> Login()
+        [Route("api/sign_up")]
+        public async Task<IActionResult> RegistrationNew([FromBody] Employee employee)
         {
-            var username = "Prerak";
-            if (username == "Prerak")
+            Employee? withHashedPass = await _authData.Registration(employee);
+            if (withHashedPass != null)
             {
-                var token = await GenerateJwtToken(username);
-                return Ok(new { user = username, token = token });
+                try
+                {
+                    return Ok("Registration succeed - you can enter with mail " + withHashedPass.Email);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest("Invalid User" + ex);
+                }
             }
-            else
-            {
-                return BadRequest("Invalid User");
-            }
+            return BadRequest("User has been already found");
         }
 
-
-        private async Task<string> GenerateJwtToken(string username)
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("api/sign_in")]
+        public async Task<IActionResult> LoginNew([FromBody] Employee employee)
         {
-            var someSecret = "a very random string which should";
-            List<Claim> claims = new List<Claim>() {
-        new Claim(ClaimTypes.Name,username),
-        new Claim(ClaimTypes.Role,"User"),
+            Employee? withHashedPass = await _authData.Login(employee);
+            if (withHashedPass != null)
+            {
+                var token = await GenerateJwtToken(withHashedPass.Password, withHashedPass.Email);
+                try
+                {
+                    return Ok(token);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest("Invalid User" + ex);
+                }
+            }
+            return BadRequest("User was not found");
+        }
 
-    };
+        private async Task<string> GenerateJwtToken(string password, string mail)
+        {
+            string[] jwtInfo = settingsJwt.GetJWT();
+
+            List<Claim> claims = new List<Claim>() {
+            new Claim(ClaimTypes.Email, mail),
+            new Claim(ClaimTypes.Hash, password),
+            };
             var jwtTokenHandler = new JwtSecurityTokenHandler();
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(someSecret));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtInfo[0]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             JwtSecurityToken SecurityToken = new JwtSecurityToken(
-                issuer: "myapi.com",
-                audience: "myapi.com",
+                issuer: jwtInfo[1],
+                audience: jwtInfo[2],
                 claims: claims,
                 expires: DateTime.Now.AddDays(7),
                 signingCredentials: credentials
@@ -118,7 +114,5 @@ namespace ReactASPCore.Controllers
             return null;
         }
     }
-
-
 }
 

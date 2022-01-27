@@ -1,34 +1,42 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.EntityFrameworkCore;
 using ReactASPCore.Models;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ReactASPCore.EmployeesData
 {
     public class EmployeeData : IEmployee
     {
-        public async Task<string> Registration(Employee employee)
+        public async Task<Employee> Registration(Employee employee)
         {
-            string response = "User can't be added";
             using (ApplicationContext db = new ApplicationContext())
             { 
                 var employees = await db.Employees.ToListAsync();
                 if (employees.Find(x => x.Email == employee.Email) == null)
                 {
+                    byte[] data = new UTF8Encoding().GetBytes(employee.Password);
+                    byte[] hashedPassword;
+                    SHA256 shaM = new SHA256Managed();
+                    hashedPassword = shaM.ComputeHash(data);
+                    employee.Password = Convert.ToBase64String(hashedPassword);
                     employee.UpdatedAt = DateTime.Now;
                     await db.Employees.AddAsync(employee);
                     await db.SaveChangesAsync();
-                    response = "Registration is successed";
-                }
-                else
-                {
-                    response = "User is found - just sign in";
+                    return employee;
                 }
             }
-            return response;
+            return null;
         }
-        public async Task<string> Login(Employee employee, string? token)
+        public async Task<Employee> Login(Employee employee)
         {
-            string response = "User can't be added";
+            byte[] data = new UTF8Encoding().GetBytes(employee.Password);
+            byte[] hashedPassword;
+            SHA256 shaM = new SHA256Managed();
+            hashedPassword = shaM.ComputeHash(data);
+            employee.Password = Convert.ToBase64String(hashedPassword);
+
             using (ApplicationContext db = new ApplicationContext())
             {
                 var employees = await db.Employees.ToListAsync();
@@ -36,37 +44,12 @@ namespace ReactASPCore.EmployeesData
                 && x.Password == employee.Password);
                 if (currentEmployee != null)
                 {
-                    if (token != "")
-                    {
-                        Employee withToken = new Employee()
-                        {
-                            Id = currentEmployee.Id,
-                            Email = currentEmployee.Email,
-                            Password = currentEmployee.Password,
-                            FirstName = currentEmployee.FirstName,
-                            LastName = currentEmployee.LastName,
-                            Phone = currentEmployee.Phone,
-                            IsAdmin = currentEmployee.IsAdmin,
-                            UpdatedAt = currentEmployee.UpdatedAt,
-                            UpdatedBy = currentEmployee.UpdatedBy,
-                            token = token
-                        };
-
-                        
-                        db.Remove(currentEmployee);
-                        await db.AddAsync(withToken);
-                        await db.SaveChangesAsync();
-                    }
-                    response = "Login is successed";
-                }
-                else
-                {
-                    response = "User is not found - just sign up";
+                    return currentEmployee;
                 }
             }
-            return response;
+            return null;
         }
-        public async Task<string> DeleteEmployee(Guid id, string token)
+        /*public async Task<string> DeleteEmployee(Guid id, string token)
         {
             string response = "DB wasn't opened";
             using (ApplicationContext db = new ApplicationContext())
@@ -99,6 +82,6 @@ namespace ReactASPCore.EmployeesData
                 }
             }
             return response;
-        }
+        }*/
     }
 }

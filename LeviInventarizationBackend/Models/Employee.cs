@@ -20,7 +20,6 @@ namespace ReactASPCore.Models
         public string? LastName { get; set; }
         [MaxLength(30)]
         public string? Phone { get; set; }
-        public string? token { get; set; }
         public bool IsAdmin { get; set; }
         public Guid UpdatedBy { get; set; }
         public DateTime UpdatedAt 
